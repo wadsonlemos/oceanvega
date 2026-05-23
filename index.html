@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Vega - Painel de Publicações</title>
+    
+    <!-- Google Fonts: Inter & Montserrat for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Vega & Vega-Lite Libraries from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Pre-aggregated data loaded from local JS to bypass CORS -->
+    <script src="dashboard_data.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header Section -->
+        <header class="dashboard-header">
+            <div class="header-content">
+                <div class="logo-area">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M2 17c.6-1.5 2.1-2.5 3.5-2.5 2 0 2 1.5 4 1.5s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5c1.4 0 2.9 1 3.5 2.5"/>
+                        <path d="M2 12c.6-1.5 2.1-2.5 3.5-2.5 2 0 2 1.5 4 1.5s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5c1.4 0 2.9 1 3.5 2.5"/>
+                        <path d="M2 7c.6-1.5 2.1-2.5 3.5-2.5 2 0 2 1.5 4 1.5s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5c1.4 0 2.9 1 3.5 2.5"/>
+                    </svg>
+                    <h1>Ocean Vega</h1>
+                </div>
+                <p class="subtitle">Análise integrada de publicações científicas e métricas de citações (OpenAlex)</p>
+            </div>
+            <div class="theme-toggle-area">
+                <span class="data-status"><span class="status-dot"></span> Dados prontos (46.6k registros)</span>
+            </div>
+        </header>
+
+        <!-- KPI Cards Grid -->
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon-wrapper blue">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                </div>
+                <div class="kpi-details">
+                    <h3>Total de Publicações</h3>
+                    <p id="kpi-total-publications" class="kpi-value">-</p>
+                    <span class="kpi-context">artigos e capítulos</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-wrapper orange">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                </div>
+                <div class="kpi-details">
+                    <h3>Total de Citações</h3>
+                    <p id="kpi-total-citations" class="kpi-value">-</p>
+                    <span class="kpi-context">impacto acumulado</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-wrapper green">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"/>
+                        <line x1="12" y1="20" x2="12" y2="4"/>
+                        <line x1="6" y1="20" x2="6" y2="14"/>
+                    </svg>
+                </div>
+                <div class="kpi-details">
+                    <h3>Média de Citações</h3>
+                    <p id="kpi-avg-citations" class="kpi-value">-</p>
+                    <span class="kpi-context">por publicação</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-wrapper purple">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                </div>
+                <div class="kpi-details">
+                    <h3>Periódicos</h3>
+                    <p id="kpi-total-sources" class="kpi-value">-</p>
+                    <span class="kpi-context">fontes de publicação</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters Section -->
+        <section class="filters-card">
+            <div class="filters-header">
+                <svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                </svg>
+                <h2>Filtros Interativos</h2>
+                <button id="btn-reset-filters" class="btn-secondary small">Limpar Filtros</button>
+            </div>
+            
+            <div class="filters-grid">
+                <!-- Year range filter -->
+                <div class="filter-group">
+                    <label>Ano de Publicação (<span id="year-range-display">1915 - 2025</span>)</label>
+                    <div class="range-slider-container">
+                        <input type="range" id="filter-year-min" min="1915" max="2025" value="1915" class="slider">
+                        <input type="range" id="filter-year-max" min="1915" max="2025" value="2025" class="slider">
+                    </div>
+                </div>
+
+                <!-- Language filter -->
+                <div class="filter-group">
+                    <label for="filter-language">Idioma</label>
+                    <select id="filter-language">
+                        <option value="all">Todos os Idiomas</option>
+                        <!-- Will be populated dynamically -->
+                    </select>
+                </div>
+
+                <!-- Type filter -->
+                <div class="filter-group">
+                    <label for="filter-type">Tipo de Documento</label>
+                    <select id="filter-type">
+                        <option value="all">Todos os Tipos</option>
+                        <!-- Will be populated dynamically -->
+                    </select>
+                </div>
+
+                <!-- Search filter -->
+                <div class="filter-group">
+                    <label for="filter-search-source">Buscar Periódico / Revista</label>
+                    <div class="search-input-wrapper">
+                        <input type="text" id="filter-search-source" placeholder="Ex: Marine Pollution Bulletin...">
+                        <button id="clear-search-btn" class="clear-btn">&times;</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Active Filters Display Bar -->
+        <div id="active-filters-bar" class="active-filters-bar" style="display: none;">
+            <span class="active-filters-title">Filtros Ativos:</span>
+            <div id="active-filters-list" class="active-filters-list"></div>
+            <button id="btn-clear-all-filters" class="clear-all-btn">Limpar Todos</button>
+        </div>
+
+        <!-- Main Dashboard Visualization Grid -->
+        <main class="dashboard-grid">
+            <!-- Row 1: Temporal Evolution & Publication Language -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>Evolução temporal</h2>
+                        <span class="chart-subtitle">Volume de publicações por ano</span>
+                    </div>
+                    <div class="chart-actions">
+                        <span class="sort-label">Ordenar:</span>
+                        <div class="toggle-group">
+                            <button id="sort-by-publications" class="toggle-btn active">Publicações</button>
+                            <button id="sort-by-year" class="toggle-btn">Cronológica</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="chart-temporal" class="chart-container"></div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>Idioma das Publicações</h2>
+                        <span class="chart-subtitle">Percentual das principais línguas</span>
+                    </div>
+                </div>
+                <div id="chart-language" class="chart-container donut-container"></div>
+            </div>
+
+            <!-- Row 2: Scientific Production Table & Areas -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>Produção Científica</h2>
+                        <span class="chart-subtitle">Produção de publicações detalhada por fonte</span>
+                    </div>
+                </div>
+                <div class="table-card-content">
+                    <div class="table-filter-bar">
+                        <input type="text" id="table-filter-input" placeholder="Filter...">
+                        <button id="table-filter-btn" class="table-filter-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="search-icon">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="table-scroll-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th id="th-rank" class="sortable">#</th>
+                                    <th id="th-source" class="sortable">Produção Científica por Fonte <span class="sort-indicator"></span></th>
+                                    <th id="th-count" class="sortable desc">Publicações <span class="sort-indicator">▼</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body-sources">
+                                <!-- Dynamic rows populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>Áreas</h2>
+                        <span class="chart-subtitle">Classificação por áreas de conhecimento</span>
+                    </div>
+                </div>
+                <div id="chart-areas" class="chart-container treemap-container"></div>
+            </div>
+
+            <!-- Row 3: Institutions Table & Subareas -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>Instituições</h2>
+                        <span class="chart-subtitle">Publicações detalhadas por universidade</span>
+                    </div>
+                </div>
+                <div class="table-card-content">
+                    <div class="table-filter-bar">
+                        <input type="text" id="table-inst-filter-input" placeholder="Filter...">
+                        <button id="table-inst-filter-btn" class="table-filter-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="search-icon">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="table-scroll-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th id="th-inst-rank" class="sortable">#</th>
+                                    <th id="th-inst-name" class="sortable">Universidades <span class="sort-indicator"></span></th>
+                                    <th id="th-inst-count" class="sortable desc">Publicações <span class="sort-indicator">▼</span></th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body-institutions">
+                                <!-- Dynamic rows populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>Subareas</h2>
+                        <span class="chart-subtitle">Percentual das principais subáreas</span>
+                    </div>
+                </div>
+                <div id="chart-subareas" class="chart-container treemap-container"></div>
+            </div>
+
+            <!-- Row 4: Production by Country & Research Topics -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>Produção Científica Por País</h2>
+                        <span class="chart-subtitle">Percentual de publicações por país</span>
+                    </div>
+                </div>
+                <div id="chart-countries" class="chart-container donut-container"></div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>Tópicos de Pesquisa</h2>
+                        <span class="chart-subtitle">Percentual das principais áreas do OpenAlex</span>
+                    </div>
+                </div>
+                <div id="chart-topics" class="chart-container donut-container"></div>
+            </div>
+
+            <!-- Row 5: Document Type & Gender -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>Distribuição por Tipo de Documento</h2>
+                        <span class="chart-subtitle">Distribuição por tipo de documento</span>
+                    </div>
+                </div>
+                <div id="chart-type" class="chart-container"></div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>Gênero</h2>
+                        <span class="chart-subtitle">Previsão de gênero do primeiro autor</span>
+                    </div>
+                </div>
+                <div id="chart-gender" class="chart-container donut-container"></div>
+            </div>
+
+            <!-- Row 6: Listagem das Publicações & Acesso Aberto -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>Listagem das Publicações</h2>
+                        <span class="chart-subtitle">Publicações detalhadas agrupadas por fonte e ano</span>
+                    </div>
+                </div>
+                <div class="table-card-content">
+                    <div class="table-scroll-container" style="max-height: 290px;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="cell-rank">#</th>
+                                    <th>Título / Fonte</th>
+                                    <th>Tipo</th>
+                                    <th>Ano</th>
+                                    <th class="cell-count">Registros</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body-publications-list">
+                                <!-- Dynamic rows populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-footer-bar" style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px;">
+                        <div class="export-options" style="font-size: 12px; color: var(--text-muted);">
+                            Export: 
+                            <a href="#" id="export-raw-btn" class="export-link" style="color: var(--primary-hover); font-weight: 600; text-decoration: none; margin: 0 4px;">Raw <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px; height:12px; display:inline-block; vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a> | 
+                            <a href="#" id="export-formatted-btn" class="export-link" style="color: var(--primary-hover); font-weight: 600; text-decoration: none; margin: 0 4px;">Formatted <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:12px; height:12px; display:inline-block; vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></a>
+                        </div>
+                        <div id="table-pagination" class="table-pagination" style="display: flex; gap: 4px; align-items: center; user-select: none;">
+                            <!-- Pagination links populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>Acesso Aberto</h2>
+                        <span class="chart-subtitle">Percentual de publicações em acesso aberto</span>
+                    </div>
+                </div>
+                <div id="chart-oa-pie" class="chart-container"></div>
+            </div>
+
+            <!-- Row 7: OA Status (Full-width) -->
+            <div class="chart-card span-all">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>OA Status</h2>
+                        <span class="chart-subtitle">Distribuição das publicações em acesso aberto por categoria</span>
+                    </div>
+                </div>
+                <div id="chart-oa-status-bar" class="chart-container large-chart"></div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="dashboard-footer">
+            <p>Desenvolvido com Vega-Lite &bull; Ocean Vega Dashboard &copy; 2026</p>
+        </footer>
+    </div>
+
+    <!-- Main Logic Script -->
+    <script src="app.js"></script>
+</body>
+</html>
