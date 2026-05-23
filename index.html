@@ -25,16 +25,15 @@
     <div class="app-container">
         <!-- Header Section -->
         <header class="dashboard-header">
-            <div class="header-content">
+            <div class="header-content" style="flex-grow: 1;">
                 <div class="logo-area">
                     <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                         <path d="M2 17c.6-1.5 2.1-2.5 3.5-2.5 2 0 2 1.5 4 1.5s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5c1.4 0 2.9 1 3.5 2.5"/>
                         <path d="M2 12c.6-1.5 2.1-2.5 3.5-2.5 2 0 2 1.5 4 1.5s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5c1.4 0 2.9 1 3.5 2.5"/>
                         <path d="M2 7c.6-1.5 2.1-2.5 3.5-2.5 2 0 2 1.5 4 1.5s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5c1.4 0 2.9 1 3.5 2.5"/>
                     </svg>
-                    <h1>Ocean Vega</h1>
+                    <h1 style="font-size: 20px; line-height: 1.3;">Análise integrada de publicações científicas e métricas de citações (OpenAlex)</h1>
                 </div>
-                <p class="subtitle">Análise integrada de publicações científicas e métricas de citações (OpenAlex)</p>
             </div>
             <div class="theme-toggle-area">
                 <span class="data-status"><span class="status-dot"></span> Dados prontos (46.6k registros)</span>
@@ -168,6 +167,7 @@
                         <span class="chart-subtitle">Volume de publicações por ano</span>
                     </div>
                     <div class="chart-actions">
+                        <button class="chart-clear-btn" id="btn-clear-temporal" style="display: none; margin-right: 12px;">Limpar Filtro</button>
                         <span class="sort-label">Ordenar:</span>
                         <div class="toggle-group">
                             <button id="sort-by-publications" class="toggle-btn active">Publicações</button>
@@ -184,6 +184,9 @@
                         <h2>Idioma das Publicações</h2>
                         <span class="chart-subtitle">Percentual das principais línguas</span>
                     </div>
+                    <div class="chart-actions">
+                        <button class="chart-clear-btn" id="btn-clear-language" style="display: none;">Limpar Filtro</button>
+                    </div>
                 </div>
                 <div id="chart-language" class="chart-container donut-container"></div>
             </div>
@@ -194,6 +197,9 @@
                     <div class="chart-title-area">
                         <h2>Produção Científica</h2>
                         <span class="chart-subtitle">Produção de publicações detalhada por fonte</span>
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-clear-btn" id="btn-clear-sources" style="display: none;">Limpar Filtro</button>
                     </div>
                 </div>
                 <div class="table-card-content">
@@ -229,6 +235,9 @@
                         <h2>Áreas</h2>
                         <span class="chart-subtitle">Classificação por áreas de conhecimento</span>
                     </div>
+                    <div class="chart-actions">
+                        <button class="chart-clear-btn" id="btn-clear-areas" style="display: none;">Limpar Filtro</button>
+                    </div>
                 </div>
                 <div id="chart-areas" class="chart-container treemap-container"></div>
             </div>
@@ -239,6 +248,9 @@
                     <div class="chart-title-area">
                         <h2>Instituições</h2>
                         <span class="chart-subtitle">Publicações detalhadas por universidade</span>
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-clear-btn" id="btn-clear-institutions" style="display: none;">Limpar Filtro</button>
                     </div>
                 </div>
                 <div class="table-card-content">
@@ -274,6 +286,9 @@
                         <h2>Subareas</h2>
                         <span class="chart-subtitle">Percentual das principais subáreas</span>
                     </div>
+                    <div class="chart-actions">
+                        <button class="chart-clear-btn" id="btn-clear-subareas" style="display: none;">Limpar Filtro</button>
+                    </div>
                 </div>
                 <div id="chart-subareas" class="chart-container treemap-container"></div>
             </div>
@@ -285,6 +300,9 @@
                         <h2>Produção Científica Por País</h2>
                         <span class="chart-subtitle">Percentual de publicações por país</span>
                     </div>
+                    <div class="chart-actions">
+                        <button class="chart-clear-btn" id="btn-clear-countries" style="display: none;">Limpar Filtro</button>
+                    </div>
                 </div>
                 <div id="chart-countries" class="chart-container donut-container"></div>
             </div>
@@ -294,6 +312,9 @@
                     <div class="chart-title-area">
                         <h2>Tópicos de Pesquisa</h2>
                         <span class="chart-subtitle">Percentual das principais áreas do OpenAlex</span>
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-clear-btn" id="btn-clear-topics" style="display: none;">Limpar Filtro</button>
                     </div>
                 </div>
                 <div id="chart-topics" class="chart-container donut-container"></div>
@@ -306,6 +327,9 @@
                         <h2>Distribuição por Tipo de Documento</h2>
                         <span class="chart-subtitle">Distribuição por tipo de documento</span>
                     </div>
+                    <div class="chart-actions">
+                        <button class="chart-clear-btn" id="btn-clear-type" style="display: none;">Limpar Filtro</button>
+                    </div>
                 </div>
                 <div id="chart-type" class="chart-container"></div>
             </div>
@@ -316,6 +340,9 @@
                         <h2>Gênero</h2>
                         <span class="chart-subtitle">Previsão de gênero do primeiro autor</span>
                     </div>
+                    <div class="chart-actions">
+                        <button class="chart-clear-btn" id="btn-clear-gender" style="display: none;">Limpar Filtro</button>
+                    </div>
                 </div>
                 <div id="chart-gender" class="chart-container donut-container"></div>
             </div>
@@ -325,7 +352,7 @@
                 <div class="chart-header">
                     <div class="chart-title-area">
                         <h2>Listagem das Publicações</h2>
-                        <span class="chart-subtitle">Publicações detalhadas agrupadas por fonte e ano</span>
+                        <span class="chart-subtitle">Publicações detalhadas com títulos, autores e links</span>
                     </div>
                 </div>
                 <div class="table-card-content">
@@ -334,10 +361,11 @@
                             <thead>
                                 <tr>
                                     <th class="cell-rank">#</th>
-                                    <th>Título / Fonte</th>
-                                    <th>Tipo</th>
+                                    <th>Título do Artigo</th>
+                                    <th>Autor</th>
+                                    <th>Revista / Fonte</th>
                                     <th>Ano</th>
-                                    <th class="cell-count">Registros</th>
+                                    <th class="cell-count">Citações</th>
                                 </tr>
                             </thead>
                             <tbody id="table-body-publications-list">
@@ -364,6 +392,9 @@
                         <h2>Acesso Aberto</h2>
                         <span class="chart-subtitle">Percentual de publicações em acesso aberto</span>
                     </div>
+                    <div class="chart-actions">
+                        <button class="chart-clear-btn" id="btn-clear-oa-pie" style="display: none;">Limpar Filtro</button>
+                    </div>
                 </div>
                 <div id="chart-oa-pie" class="chart-container"></div>
             </div>
@@ -374,6 +405,9 @@
                     <div class="chart-title-area">
                         <h2>OA Status</h2>
                         <span class="chart-subtitle">Distribuição das publicações em acesso aberto por categoria</span>
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-clear-btn" id="btn-clear-oa-status-bar" style="display: none;">Limpar Filtro</button>
                     </div>
                 </div>
                 <div id="chart-oa-status-bar" class="chart-container large-chart"></div>

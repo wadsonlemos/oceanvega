@@ -6,11 +6,32 @@ from collections import defaultdict, Counter
 excel_path = r"c:\Users\Wadson\Desktop\openalex_export_completo.xlsx"
 merged_json_path = r"c:\Users\Wadson\Desktop\Novo Projeto Ocean Vega\openalex_merged.json"
 
-print("Step 1: Building mapping of URL/DOI/ID to Cited By Count, Source name, Topic Field, and OA Status from JSON files...")
+def format_authors(authorships):
+    if not authorships:
+        return "Autor Desconhecido"
+    names = []
+    for a in authorships:
+        if isinstance(a, dict) and "author" in a:
+            author = a["author"]
+            if author and isinstance(author, dict) and author.get("display_name"):
+                names.append(author.get("display_name"))
+    if not names:
+        return "Autor Desconhecido"
+    if len(names) == 1:
+        return names[0]
+    elif len(names) == 2:
+        return f"{names[0]} & {names[1]}"
+    else:
+        return f"{names[0]} et al."
+
+print("Step 1: Building mapping of URL/DOI/ID to Cited By Count, Source name, Topic Field, OA Status, Title, Authors, and Links from JSON files...")
 citations_map = {} # work_id/doi/url -> cited_by_count
 source_map = {}    # work_id/doi/url -> source_display_name
 topic_to_field = {} # topic_display_name -> field_display_name
 oa_map = {}        # work_id/doi/url -> oa_status
+title_map = {}     # work_id/doi/url -> title
+author_map = {}    # work_id/doi/url -> authors_formatted_string
+link_map = {}      # work_id/doi/url -> publication_link
 
 json_files = [
     merged_json_path,
@@ -54,8 +75,20 @@ for jp in json_files:
                 if oa and isinstance(oa, dict):
                     oa_status = oa.get("oa_status")
                 
-                # 5. Map IDs, DOIs, URLs
+                # 5. Get title, authors, link
+                title = item.get("title")
+                authorships = item.get("authorships") or []
+                authors_str = format_authors(authorships)
+                
                 doi = item.get("doi")
+                landing_url = None
+                pdf_url = None
+                if loc and isinstance(loc, dict):
+                    landing_url = loc.get("landing_page_url")
+                    pdf_url = loc.get("pdf_url")
+                link = doi or landing_url or pdf_url or ""
+                
+                # 6. Map IDs, DOIs, URLs
                 work_id = item.get("id")
                 
                 keys = []
@@ -64,12 +97,10 @@ for jp in json_files:
                 if work_id:
                     keys.append(work_id.lower().strip())
                 if loc and isinstance(loc, dict):
-                    url = loc.get("landing_page_url")
-                    if url:
-                        keys.append(url.lower().strip())
-                    pdf = loc.get("pdf_url")
-                    if pdf:
-                        keys.append(pdf.lower().strip())
+                    if landing_url:
+                        keys.append(landing_url.lower().strip())
+                    if pdf_url:
+                        keys.append(pdf_url.lower().strip())
                 
                 for k in keys:
                     citations_map[k] = citations
@@ -77,6 +108,12 @@ for jp in json_files:
                         source_map[k] = source_name
                     if oa_status:
                         oa_map[k] = oa_status
+                    if title:
+                        title_map[k] = title
+                    if authors_str:
+                        author_map[k] = authors_str
+                    if link:
+                        link_map[k] = link
         except Exception as e:
             print(f"  Error reading {jp}: {e}")
 
@@ -173,17 +210,23 @@ print("Solver complete. Assignments of top universities:")
 for k, v in assigned_counts.items():
     print(f"  {k}: {v} (Target: {targets[k]})")
 
-print("\nStep 4: Mapping primary location, citation count, topic fields list, and OA Status...")
+print("\nStep 4: Mapping primary location, citation count, topic fields list, OA Status, Title, Authors, and Links...")
 mapped_sources = []
 mapped_citations = []
 mapped_fields_strings = []
 mapped_oa_status = []
+mapped_titles = []
+mapped_authors = []
+mapped_links = []
 
 for idx, row in df.iterrows():
     loc = row['primary_location']
     source = "Unknown Source"
     citations = 0
     oa_status = "diamond" # Default fallback
+    title = "Unknown Title"
+    authors = "Unknown Author"
+    link = ""
     
     if not pd.isna(loc) and isinstance(loc, str):
         loc_clean = loc.lower().strip()
@@ -220,9 +263,45 @@ for idx, row in df.iterrows():
         if not oa_status or oa_status == "closed":
             oa_status = "diamond"
             
+        # Find mapped Title
+        title = title_map.get(loc_clean)
+        if not title and "doi.org/" in loc_clean:
+            doi_part = loc_clean.split("doi.org/")[-1]
+            for k, t in title_map.items():
+                if doi_part in k:
+                    title = t
+                    break
+        if not title:
+            title = "Unknown Title"
+            
+        # Find mapped Authors
+        authors = author_map.get(loc_clean)
+        if not authors and "doi.org/" in loc_clean:
+            doi_part = loc_clean.split("doi.org/")[-1]
+            for k, a in author_map.items():
+                if doi_part in k:
+                    authors = a
+                    break
+        if not authors:
+            authors = "Unknown Author"
+            
+        # Find mapped Link
+        link = link_map.get(loc_clean)
+        if not link and "doi.org/" in loc_clean:
+            doi_part = loc_clean.split("doi.org/")[-1]
+            for k, l in link_map.items():
+                if doi_part in k:
+                    link = l
+                    break
+        if not link:
+            link = ""
+            
     mapped_sources.append(source)
     mapped_citations.append(citations)
     mapped_oa_status.append(oa_status)
+    mapped_titles.append(title)
+    mapped_authors.append(authors)
+    mapped_links.append(link)
     
     # Map topics column to fields list
     topics_val = row['topics']
@@ -242,10 +321,32 @@ df['mapped_source'] = mapped_sources
 df['mapped_citations'] = mapped_citations
 df['mapped_fields'] = mapped_fields_strings
 df['mapped_oa_status'] = mapped_oa_status
+df['mapped_title'] = mapped_titles
+df['mapped_authors'] = mapped_authors
+df['mapped_link'] = mapped_links
 
-print("\nStep 5: Grouping data cube to reduce size...")
-# Group by: year, language, type, gender, area, subarea, source, institution, countries, fields_string, is_oa, oa_status
-cube = defaultdict(lambda: {"count": 0, "citations": 0})
+print("\nStep 5: Dictionary Encoding individual publications...")
+# We build a dictionary-encoded dataset to save file space.
+dicts = {
+    "languages": [],
+    "types": [],
+    "genders": [],
+    "areas": [],
+    "subareas": [],
+    "sources": [],
+    "institutions": [],
+    "countries": [],
+    "fields": [],
+    "oa_statuses": []
+}
+
+def get_dict_id(dct_name, val):
+    val = str(val).strip()
+    if val not in dicts[dct_name]:
+        dicts[dct_name].append(val)
+    return dicts[dct_name].index(val)
+
+encoded_data = []
 
 for idx, row in df.iterrows():
     # Year
@@ -313,42 +414,48 @@ for idx, row in df.iterrows():
     # Citations
     citations = int(row['mapped_citations'])
     
-    key = (year, lang, doc_type, gender, area, subarea, source, institution, countries, fields_str, is_oa, oa_status)
-    cube[key]["count"] += 1
-    cube[key]["citations"] += citations
+    # Title, Authors, Link
+    title = row['mapped_title']
+    authors = row['mapped_authors']
+    link = row['mapped_link']
+    
+    row_encoded = [
+        year,
+        get_dict_id("languages", lang),
+        get_dict_id("types", doc_type),
+        get_dict_id("genders", gender),
+        get_dict_id("areas", area),
+        get_dict_id("subareas", subarea),
+        get_dict_id("sources", source),
+        get_dict_id("institutions", institution),
+        get_dict_id("countries", countries),
+        get_dict_id("fields", fields_str),
+        is_oa,
+        get_dict_id("oa_statuses", oa_status),
+        citations,
+        title,
+        authors,
+        link
+    ]
+    encoded_data.append(row_encoded)
 
-aggregated_data = []
-for key, values in cube.items():
-    year, lang, doc_type, gender, area, subarea, source, institution, countries, fields_str, is_oa, oa_status = key
-    aggregated_data.append({
-        "year": year,
-        "language": lang,
-        "type": doc_type,
-        "gender": gender,
-        "area": area,
-        "subarea": subarea,
-        "source": source,
-        "institution": institution,
-        "countries": countries,
-        "fields": fields_str,
-        "is_oa": is_oa,
-        "oa_status": oa_status,
-        "count": values["count"],
-        "citations": values["citations"]
-    })
-
-print(f"Aggregated from {len(df)} records to {len(aggregated_data)} unique combinations.")
+print(f"Encoded {len(encoded_data)} publications.")
 
 out_json_path = r"C:\Users\Wadson\Desktop\Novo Projeto Ocean Vega\dashboard_data.json"
 out_js_path = r"C:\Users\Wadson\Desktop\Novo Projeto Ocean Vega\dashboard_data.js"
 
 print("\nStep 6: Saving JSON and JS files...")
+output_payload = {
+    "dicts": dicts,
+    "data": encoded_data
+}
+
 with open(out_json_path, 'w', encoding='utf-8') as f:
-    json.dump(aggregated_data, f, ensure_ascii=False, indent=2)
+    json.dump(output_payload, f, ensure_ascii=False, indent=2)
 
 with open(out_js_path, 'w', encoding='utf-8') as f:
-    f.write("const dashboardData = ")
-    json.dump(aggregated_data, f, ensure_ascii=False)
+    f.write("const dashboardDataRaw = ")
+    json.dump(output_payload, f, ensure_ascii=False)
     f.write(";")
 
 print("Saved files successfully.")

@@ -111,9 +111,40 @@ const COLOR_SCHEME = [
     "#a0aec0", "#e2e8f0", "#718096", "#cbd5e1"
 ];
 
+// Global dataset decompressed
+let dashboardData = [];
+
+function decompressData() {
+    if (typeof dashboardDataRaw === 'undefined') {
+        console.error("dashboardDataRaw is not loaded! Make sure dashboard_data.js is present.");
+        return false;
+    }
+    const dicts = dashboardDataRaw.dicts;
+    dashboardData = dashboardDataRaw.data.map(item => ({
+        year: item[0],
+        language: dicts.languages[item[1]],
+        type: dicts.types[item[2]],
+        gender: dicts.genders[item[3]],
+        area: dicts.areas[item[4]],
+        subarea: dicts.subareas[item[5]],
+        source: dicts.sources[item[6]],
+        institution: dicts.institutions[item[7]],
+        countries: dicts.countries[item[8]],
+        fields: dicts.fields[item[9]],
+        is_oa: item[10],
+        oa_status: dicts.oa_statuses[item[11]],
+        citations: item[12],
+        count: 1,
+        title: item[13],
+        authors: item[14],
+        link: item[15]
+    }));
+    return true;
+}
+
 // Initialize the application
 function init() {
-    if (typeof dashboardData === 'undefined' || !Array.isArray(dashboardData)) {
+    if (!decompressData()) {
         console.error("Dashboard data could not be loaded. Please ensure dashboard_data.js is present.");
         return;
     }
@@ -274,6 +305,64 @@ function setupEventListeners() {
         e.preventDefault();
         exportPublicationsList(false);
     });
+
+    // Chart level clear buttons listeners
+    document.getElementById('btn-clear-temporal').addEventListener('click', () => {
+        activeFilters.yearMin = 1915;
+        activeFilters.yearMax = 2025;
+        minYearSlider.value = 1915;
+        maxYearSlider.value = 2025;
+        updateYearRangeDisplay();
+        updateDashboard();
+    });
+    document.getElementById('btn-clear-language').addEventListener('click', () => {
+        activeFilters.language = 'all';
+        selectLanguage.value = 'all';
+        updateDashboard();
+    });
+    document.getElementById('btn-clear-sources').addEventListener('click', () => {
+        activeFilters.searchSource = '';
+        searchSourceInput.value = '';
+        clearSearchBtn.style.display = 'none';
+        updateDashboard();
+    });
+    document.getElementById('btn-clear-areas').addEventListener('click', () => {
+        activeFilters.area = 'all';
+        updateDashboard();
+    });
+    document.getElementById('btn-clear-institutions').addEventListener('click', () => {
+        activeFilters.institution = 'all';
+        updateDashboard();
+    });
+    document.getElementById('btn-clear-subareas').addEventListener('click', () => {
+        activeFilters.subarea = 'all';
+        updateDashboard();
+    });
+    document.getElementById('btn-clear-countries').addEventListener('click', () => {
+        activeFilters.country = 'all';
+        updateDashboard();
+    });
+    document.getElementById('btn-clear-topics').addEventListener('click', () => {
+        activeFilters.topic = 'all';
+        updateDashboard();
+    });
+    document.getElementById('btn-clear-type').addEventListener('click', () => {
+        activeFilters.type = 'all';
+        selectType.value = 'all';
+        updateDashboard();
+    });
+    document.getElementById('btn-clear-gender').addEventListener('click', () => {
+        activeFilters.gender = 'all';
+        updateDashboard();
+    });
+    document.getElementById('btn-clear-oa-pie').addEventListener('click', () => {
+        activeFilters.openAccess = 'all';
+        updateDashboard();
+    });
+    document.getElementById('btn-clear-oa-status-bar').addEventListener('click', () => {
+        activeFilters.oaStatus = 'all';
+        updateDashboard();
+    });
 }
 
 // Helper to update the text showing the selected range
@@ -396,6 +485,7 @@ function updateDashboard() {
 
     // 3. Render active filters tag bar
     renderActiveFiltersBar();
+    updateChartClearButtonsVisibility();
 
     // 4. Update KPIs
     updateKPIs();
@@ -571,6 +661,21 @@ function renderActiveFiltersBar() {
     } else {
         bar.style.display = 'none';
     }
+}
+
+function updateChartClearButtonsVisibility() {
+    document.getElementById('btn-clear-temporal').style.display = (activeFilters.yearMin > 1915 || activeFilters.yearMax < 2025) ? 'inline-block' : 'none';
+    document.getElementById('btn-clear-language').style.display = (activeFilters.language !== 'all') ? 'inline-block' : 'none';
+    document.getElementById('btn-clear-sources').style.display = (activeFilters.searchSource !== '') ? 'inline-block' : 'none';
+    document.getElementById('btn-clear-areas').style.display = (activeFilters.area !== 'all') ? 'inline-block' : 'none';
+    document.getElementById('btn-clear-institutions').style.display = (activeFilters.institution !== 'all') ? 'inline-block' : 'none';
+    document.getElementById('btn-clear-subareas').style.display = (activeFilters.subarea !== 'all') ? 'inline-block' : 'none';
+    document.getElementById('btn-clear-countries').style.display = (activeFilters.country !== 'all') ? 'inline-block' : 'none';
+    document.getElementById('btn-clear-topics').style.display = (activeFilters.topic !== 'all') ? 'inline-block' : 'none';
+    document.getElementById('btn-clear-type').style.display = (activeFilters.type !== 'all') ? 'inline-block' : 'none';
+    document.getElementById('btn-clear-gender').style.display = (activeFilters.gender !== 'all') ? 'inline-block' : 'none';
+    document.getElementById('btn-clear-oa-pie').style.display = (activeFilters.openAccess !== 'all') ? 'inline-block' : 'none';
+    document.getElementById('btn-clear-oa-status-bar').style.display = (activeFilters.oaStatus !== 'all') ? 'inline-block' : 'none';
 }
 
 function createFilterTag(label, value, onRemove) {
@@ -1696,24 +1801,14 @@ function renderInstitutionsTable() {
 
 // PUBLICATIONS LIST TABLE RENDERING & PAGINATION (New Card)
 function renderPublicationsListTable() {
-    // Group filteredData by source, type, year
-    const listGroup = {};
-    filteredData.forEach(item => {
-        const src = item.source || "Unknown Source";
-        const key = `${src}||${item.type}||${item.year}`;
-        if (!listGroup[key]) {
-            listGroup[key] = { source: src, type: item.type, year: item.year, count: 0 };
-        }
-        listGroup[key].count += item.count;
-    });
+    // We display individual filtered items
+    publicationsListData = filteredData;
 
-    // Convert to array
-    publicationsListData = Object.values(listGroup);
-
-    // Sort descending by count, then by year
+    // Sort descending by year, then by citations, then by title
     publicationsListData.sort((a, b) => {
-        if (b.count !== a.count) return b.count - a.count;
-        return b.year - a.year;
+        if (b.year !== a.year) return b.year - a.year;
+        if (b.citations !== a.citations) return b.citations - a.citations;
+        return (a.title || "").localeCompare(b.title || "");
     });
 
     // Populate rows for current page
@@ -1725,7 +1820,7 @@ function renderPublicationsListTable() {
 
     if (publicationsListData.length === 0) {
         const row = document.createElement('tr');
-        row.innerHTML = `<td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Nenhuma publicação encontrada</td>`;
+        row.innerHTML = `<td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Nenhuma publicação encontrada</td>`;
         tableBodyPublicationsList.appendChild(row);
         renderTablePagination(0);
         return;
@@ -1734,13 +1829,19 @@ function renderPublicationsListTable() {
     currentPageData.forEach((item, index) => {
         const rank = startIndex + index + 1;
         const row = document.createElement('tr');
-        const displayType = TYPE_MAP[item.type] || item.type;
+        
+        let titleHtml = item.title || "Sem título";
+        if (item.link) {
+            titleHtml = `<a href="${item.link}" target="_blank" style="color: var(--text-main); font-weight: 600; text-decoration: none; border-bottom: 1px dashed var(--primary-color);">${item.title}</a>`;
+        }
+        
         row.innerHTML = `
             <td class="cell-rank">${rank}</td>
+            <td class="cell-title">${titleHtml}</td>
+            <td class="cell-author">${item.authors || "Autor Desconhecido"}</td>
             <td class="cell-source" style="cursor: pointer;" onclick="handleChartClick('source_table', {key: '${item.source.replace(/'/g, "\\'")}'})">${item.source}</td>
-            <td style="cursor: pointer;" onclick="handleChartClick('type', {key: '${item.type}'})">${displayType}</td>
             <td style="cursor: pointer;" onclick="handleChartClick('temporal', {year: ${item.year}})">${item.year}</td>
-            <td class="cell-count">${item.count.toLocaleString('pt-BR')}</td>
+            <td class="cell-count">${item.citations.toLocaleString('pt-BR')}</td>
         `;
         tableBodyPublicationsList.appendChild(row);
     });
@@ -1843,21 +1944,23 @@ function exportPublicationsList(raw = true) {
     let filename = "";
 
     if (raw) {
-        csvContent += "Rank,Source,Type,Year,Count\n";
+        csvContent += "Rank,Title,Author,Source,Year,Citations,Link\n";
         publicationsListData.forEach((item, index) => {
             const rank = index + 1;
-            // Escape double quotes in source names
-            const cleanSource = item.source.replace(/"/g, '""');
-            csvContent += `${rank},"${cleanSource}",${item.type},${item.year},${item.count}\n`;
+            const cleanTitle = (item.title || "").replace(/"/g, '""');
+            const cleanAuthor = (item.authors || "").replace(/"/g, '""');
+            const cleanSource = (item.source || "").replace(/"/g, '""');
+            csvContent += `${rank},"${cleanTitle}","${cleanAuthor}","${cleanSource}",${item.year},${item.citations},"${item.link || ''}"\n`;
         });
         filename = "listagem_publicacoes_raw.csv";
     } else {
-        csvContent += "Posição,Periódico / Fonte,Tipo de Documento,Ano de Publicação,Total de Registros\n";
+        csvContent += "Posição,Título do Artigo,Autor,Periódico / Fonte,Ano de Publicação,Citações,Link do Artigo\n";
         publicationsListData.forEach((item, index) => {
             const rank = index + 1;
-            const cleanSource = item.source.replace(/"/g, '""');
-            const displayType = TYPE_MAP[item.type] || item.type;
-            csvContent += `${rank},"${cleanSource}",${displayType},${item.year},${item.count}\n`;
+            const cleanTitle = (item.title || "").replace(/"/g, '""');
+            const cleanAuthor = (item.authors || "").replace(/"/g, '""');
+            const cleanSource = (item.source || "").replace(/"/g, '""');
+            csvContent += `${rank},"${cleanTitle}","${cleanAuthor}","${cleanSource}",${item.year},${item.citations},"${item.link || ''}"\n`;
         });
         filename = "listagem_publicacoes_formatada.csv";
     }

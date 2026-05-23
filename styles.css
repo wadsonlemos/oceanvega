@@ -849,3 +849,23 @@ body {
     text-decoration: underline !important;
     opacity: 0.8;
 }
+
+/* Chart level clear buttons */
+.chart-clear-btn {
+    background-color: var(--primary-light);
+    color: var(--primary-hover);
+    border: 1px solid rgba(85, 179, 153, 0.2);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    outline: none;
+}
+
+.chart-clear-btn:hover {
+    background-color: #d1f0e8;
+    border-color: var(--primary-hover);
+}
+
