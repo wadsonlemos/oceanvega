@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ocean Vega - Painel de Publicações</title>
+    <title>Projeto Oceano: análise de publicações brasileiras sobre o oceano</title>
     
     <!-- Google Fonts: Inter & Montserrat for premium typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,11 +32,14 @@
                         <path d="M2 12c.6-1.5 2.1-2.5 3.5-2.5 2 0 2 1.5 4 1.5s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5c1.4 0 2.9 1 3.5 2.5"/>
                         <path d="M2 7c.6-1.5 2.1-2.5 3.5-2.5 2 0 2 1.5 4 1.5s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5c1.4 0 2.9 1 3.5 2.5"/>
                     </svg>
-                    <h1 style="font-size: 20px; line-height: 1.3;">Análise integrada de publicações científicas e métricas de citações (OpenAlex)</h1>
+                    <div>
+                        <h1 style="font-size: 20px; line-height: 1.3;">Projeto Oceano: análise de publicações brasileiras sobre o oceano</h1>
+                        <p class="subtitle">Fonte de dados: OpenAlex</p>
+                    </div>
                 </div>
             </div>
             <div class="theme-toggle-area">
-                <span class="data-status"><span class="status-dot"></span> Dados prontos (46.6k registros)</span>
+                <span class="data-status"><span class="status-dot"></span> Dados prontos</span>
             </div>
         </header>
 
@@ -204,7 +207,7 @@
                 </div>
                 <div class="table-card-content">
                     <div class="table-filter-bar">
-                        <input type="text" id="table-filter-input" placeholder="Filter...">
+                        <input type="text" id="table-filter-input" placeholder="Buscar periódico...">
                         <button id="table-filter-btn" class="table-filter-btn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="search-icon">
                                 <circle cx="11" cy="11" r="8"></circle>
@@ -255,7 +258,7 @@
                 </div>
                 <div class="table-card-content">
                     <div class="table-filter-bar">
-                        <input type="text" id="table-inst-filter-input" placeholder="Filter...">
+                        <input type="text" id="table-inst-filter-input" placeholder="Buscar instituição...">
                         <button id="table-inst-filter-btn" class="table-filter-btn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="search-icon">
                                 <circle cx="11" cy="11" r="8"></circle>
@@ -412,11 +415,52 @@
                 </div>
                 <div id="chart-oa-status-bar" class="chart-container large-chart"></div>
             </div>
+
+            <!-- Row 8: Artigos mais citados por autoras (Full-width) -->
+            <div class="chart-card span-all">
+                <div class="chart-header">
+                    <div class="chart-title-area">
+                        <h2>Artigos mais citados por autoras</h2>
+                        <span class="chart-subtitle">Publicações com primeiro autor de gênero feminino, ordenadas por citações</span>
+                    </div>
+                    <div class="chart-actions">
+                        <button class="chart-clear-btn" id="btn-clear-author" style="display: none;">Limpar Filtro</button>
+                    </div>
+                </div>
+                <div class="table-card-content">
+                    <div class="table-filter-bar">
+                        <input type="text" id="table-autoras-filter-input" placeholder="Buscar autora ou título...">
+                        <button id="table-autoras-filter-btn" class="table-filter-btn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="search-icon">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="table-scroll-container" style="max-height: 420px;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th class="cell-rank">#</th>
+                                    <th>Autora</th>
+                                    <th>Título do Artigo</th>
+                                    <th>Fonte</th>
+                                    <th>Ano</th>
+                                    <th class="cell-count">Citações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body-autoras">
+                                <!-- Dynamic rows populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </main>
 
         <!-- Footer -->
         <footer class="dashboard-footer">
-            <p>Desenvolvido com Vega-Lite &bull; Ocean Vega Dashboard &copy; 2026</p>
+            <p>Projeto Oceano &bull; Análise de publicações brasileiras sobre o oceano &bull; Fonte: OpenAlex &copy; 2026</p>
         </footer>
     </div>
 

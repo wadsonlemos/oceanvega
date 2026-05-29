@@ -47,7 +47,8 @@ let activeFilters = {
     topic: 'all',
     openAccess: 'all',
     oaStatus: 'all',
-    institution: 'all'
+    institution: 'all',
+    author: 'all'
 };
 
 // Global State
@@ -59,6 +60,9 @@ let tableSortDirection = 'desc'; // 'asc', 'desc'
 let tableInstSearchQuery = '';
 let tableInstSortColumn = 'count'; // 'rank', 'institution', 'count'
 let tableInstSortDirection = 'desc'; // 'asc', 'desc'
+
+// Autoras table state
+let autorasSearchQuery = '';
 
 // Publications list table state
 let publicationsListCurrentPage = 1;
@@ -363,6 +367,36 @@ function setupEventListeners() {
         activeFilters.oaStatus = 'all';
         updateDashboard();
     });
+
+    const btnClearAuthor = document.getElementById('btn-clear-author');
+    if (btnClearAuthor) {
+        btnClearAuthor.addEventListener('click', () => {
+            activeFilters.author = 'all';
+            updateDashboard();
+        });
+    }
+
+    // Autoras Table search input
+    const autorasFilterInput = document.getElementById('table-autoras-filter-input');
+    const autorasFilterBtn = document.getElementById('table-autoras-filter-btn');
+    if (autorasFilterInput) {
+        autorasFilterInput.addEventListener('input', () => {
+            autorasSearchQuery = autorasFilterInput.value.toLowerCase().trim();
+            renderAutorasTable();
+        });
+        autorasFilterInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                autorasSearchQuery = autorasFilterInput.value.toLowerCase().trim();
+                renderAutorasTable();
+            }
+        });
+    }
+    if (autorasFilterBtn) {
+        autorasFilterBtn.addEventListener('click', () => {
+            autorasSearchQuery = document.getElementById('table-autoras-filter-input').value.toLowerCase().trim();
+            renderAutorasTable();
+        });
+    }
 }
 
 // Helper to update the text showing the selected range
@@ -385,7 +419,8 @@ function resetFilters() {
         topic: 'all',
         openAccess: 'all',
         oaStatus: 'all',
-        institution: 'all'
+        institution: 'all',
+        author: 'all'
     };
 
     minYearSlider.value = 1915;
@@ -409,6 +444,11 @@ function resetFilters() {
     tableInstSortColumn = 'count';
     tableInstSortDirection = 'desc';
     updateTableInstSortIndicators();
+
+    // Reset autoras table
+    const autorasInput = document.getElementById('table-autoras-filter-input');
+    if (autorasInput) autorasInput.value = '';
+    autorasSearchQuery = '';
     
     publicationsListCurrentPage = 1;
     
@@ -480,6 +520,9 @@ function updateDashboard() {
         // Institution filter
         if (activeFilters.institution !== 'all' && item.institution !== activeFilters.institution) return false;
         
+        // Author filter
+        if (activeFilters.author !== 'all' && item.authors !== activeFilters.author) return false;
+        
         return true;
     });
 
@@ -504,6 +547,7 @@ function updateDashboard() {
     renderOAPieChart();
     renderOAStatusBarChart();
     renderPublicationsListTable();
+    renderAutorasTable();
 }
 
 // Compute and update KPIs values in the HTML
@@ -655,6 +699,15 @@ function renderActiveFiltersBar() {
         });
         hasFilters = true;
     }
+
+    // author
+    if (activeFilters.author !== 'all') {
+        createFilterTag("Autora", activeFilters.author, () => {
+            activeFilters.author = 'all';
+            updateDashboard();
+        });
+        hasFilters = true;
+    }
     
     if (hasFilters) {
         bar.style.display = 'flex';
@@ -676,6 +729,8 @@ function updateChartClearButtonsVisibility() {
     document.getElementById('btn-clear-gender').style.display = (activeFilters.gender !== 'all') ? 'inline-block' : 'none';
     document.getElementById('btn-clear-oa-pie').style.display = (activeFilters.openAccess !== 'all') ? 'inline-block' : 'none';
     document.getElementById('btn-clear-oa-status-bar').style.display = (activeFilters.oaStatus !== 'all') ? 'inline-block' : 'none';
+    const btnClearAuthor = document.getElementById('btn-clear-author');
+    if (btnClearAuthor) btnClearAuthor.style.display = (activeFilters.author !== 'all') ? 'inline-block' : 'none';
 }
 
 function createFilterTag(label, value, onRemove) {
@@ -812,6 +867,12 @@ function handleChartClick(chartType, datum) {
             activeFilters.institution = 'all';
         } else {
             activeFilters.institution = keyVal;
+        }
+    } else if (chartType === 'author') {
+        if (activeFilters.author === keyVal) {
+            activeFilters.author = 'all';
+        } else {
+            activeFilters.author = keyVal;
         }
     }
     
@@ -1974,6 +2035,67 @@ function exportPublicationsList(raw = true) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+// ─── ARTIGOS MAIS CITADOS POR AUTORAS ────────────────────────────────────────
+// Renders a ranked table of articles where the first author is FEMININO,
+// sorted by citations descending. Supports a local search filter.
+
+function renderAutorasTable() {
+    const tableBody = document.getElementById('table-body-autoras');
+    if (!tableBody) return;
+
+    // Filter to female-authored publications only
+    let data = filteredData
+        .filter(item => item.gender === 'FEMININO' && item.title)
+        .sort((a, b) => b.citations - a.citations);
+
+    // Apply local search
+    if (autorasSearchQuery !== '') {
+        data = data.filter(item =>
+            (item.authors || '').toLowerCase().includes(autorasSearchQuery) ||
+            (item.title  || '').toLowerCase().includes(autorasSearchQuery)
+        );
+    }
+
+    tableBody.innerHTML = '';
+
+    if (data.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td colspan="6" style="text-align:center;color:var(--text-muted);padding:20px;">Nenhuma publicação encontrada</td>`;
+        tableBody.appendChild(row);
+        return;
+    }
+
+    data.slice(0, 200).forEach((item, index) => {
+        const row = document.createElement('tr');
+
+        let titleHtml = item.title || 'Sem título';
+        if (item.link) {
+            titleHtml = `<a href="${item.link}" target="_blank"
+                style="color:var(--text-main);font-weight:600;text-decoration:none;border-bottom:1px dashed var(--primary-color);"
+            >${item.title}</a>`;
+        }
+
+        const safeSrc = (item.source || '').replace(/'/g, "\\'");
+        const safeAuthor = (item.authors || '').replace(/'/g, "\\'");
+
+        row.innerHTML = `
+            <td class="cell-rank">${index + 1}</td>
+            <td style="font-weight:600;color:var(--primary-hover);white-space:nowrap;cursor:pointer;"
+                onclick="handleChartClick('author',{key:'${safeAuthor}'})"
+            >${item.authors || '—'}</td>
+            <td>${titleHtml}</td>
+            <td class="cell-source" style="cursor:pointer;"
+                onclick="handleChartClick('source_table',{key:'${safeSrc}'})"
+            >${item.source || '—'}</td>
+            <td style="cursor:pointer;white-space:nowrap;"
+                onclick="handleChartClick('temporal',{year:${item.year}})"
+            >${item.year}</td>
+            <td class="cell-count">${item.citations.toLocaleString('pt-BR')}</td>
+        `;
+        tableBody.appendChild(row);
+    });
 }
 
 // Start app on page load
