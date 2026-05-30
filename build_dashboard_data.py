@@ -133,6 +133,12 @@ print("\nStep 2: Loading Excel file...")
 df = pd.read_excel(excel_path)
 print(f"Loaded {len(df)} records.")
 
+print("De-duplicating publications...")
+df_with_loc = df[df['primary_location'].notnull()].drop_duplicates(subset=['primary_location'])
+df_no_loc = df[df['primary_location'].isnull()].drop_duplicates(subset=['autores', 'publication_year'])
+df = pd.concat([df_with_loc, df_no_loc]).reset_index(drop=True)
+print(f"De-duplicated to {len(df)} unique records.")
+
 # University Targets and normalizer
 targets = {
     "Universidade de São Paulo": 3812,
@@ -443,6 +449,8 @@ print(f"Encoded {len(encoded_data)} publications.")
 
 out_json_path = r"C:\Users\Wadson\Desktop\Novo Projeto Ocean Vega\dashboard_data.json"
 out_js_path = r"C:\Users\Wadson\Desktop\Novo Projeto Ocean Vega\dashboard_data.js"
+local_json_path = r"c:\Users\Wadson\Documents\Ocean Vega\dashboard_data.json"
+local_js_path = r"c:\Users\Wadson\Documents\Ocean Vega\dashboard_data.js"
 
 print("\nStep 6: Saving JSON and JS files...")
 output_payload = {
@@ -450,14 +458,18 @@ output_payload = {
     "data": encoded_data
 }
 
-with open(out_json_path, 'w', encoding='utf-8') as f:
-    json.dump(output_payload, f, ensure_ascii=False, indent=2)
-
-with open(out_js_path, 'w', encoding='utf-8') as f:
-    f.write("const dashboardDataRaw = ")
-    json.dump(output_payload, f, ensure_ascii=False)
-    f.write(";")
+# Save to Desktop paths if directory exists
+for path_pair in [(out_json_path, out_js_path), (local_json_path, local_js_path)]:
+    json_p, js_p = path_pair
+    dir_name = os.path.dirname(json_p)
+    if os.path.exists(dir_name):
+        print(f"Saving to {dir_name}...")
+        with open(json_p, 'w', encoding='utf-8') as f:
+            json.dump(output_payload, f, ensure_ascii=False, indent=2)
+        with open(js_p, 'w', encoding='utf-8') as f:
+            f.write("const dashboardDataRaw = ")
+            json.dump(output_payload, f, ensure_ascii=False)
+            f.write(";")
 
 print("Saved files successfully.")
-print(f"JSON size: {os.path.getsize(out_json_path) / 1024 / 1024:.2f} MB")
-print(f"JS size: {os.path.getsize(out_js_path) / 1024 / 1024:.2f} MB")
+print(f"Local JS size: {os.path.getsize(local_js_path) / 1024 / 1024:.2f} MB")
